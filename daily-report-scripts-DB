@@ -1,0 +1,51 @@
+#read -p "Enter SAR File Name : " val
+echo "*******************************Max CPU Utilization for entire hours******************************** "
+
+C=$(sar -u -f /var/log/sa/sa$(date --date='yesterday' +%d)   |grep -v -E "CPU|Average|RESTART|^$" |awk '{printf " %.2f%\n",$4}' |sort -rn|head -n 1)
+
+echo "10.189.198.75"  "$C"
+
+echo "*******************************Max CPU Utilization for business  hours******************************** "
+
+B=$(sar -u -f /var/log/sa/sa$(date --date='yesterday' +%d)  -s 10:00:00 -e 20:00:00 |grep -v -E "CPU|Average|RESTART|^$" |awk '{printf " %.2f%\n",$4}' |sort -rn|head -n 1)
+echo "10.189.198.75"  "$B"
+
+echo "                                                                                           "
+
+echo "*****************************Max  MEMORY Utilization for entire  hours**********************************"
+
+G=$(sar -r -f /var/log/sa/sa$(date --date='yesterday' +%d) | grep -v -E 'Average|kbmemfree|kbmemused|^$' | awk ' $6 < 90 || $6 > 99 {printf " %.2f%\n",$6}'|sort -rn|head -n 1)
+
+echo "10.189.198.75"  "$G"
+
+
+
+echo "                                                                                           "
+
+echo "*****************************Max  MEMORY Utilization for business  hours******************************** "
+
+J=$(sar -r  -f /var/log/sa/sa$(date --date='yesterday' +%d) -s 10:00:00 -e 20:00:00  | grep -v -E 'Average|kbmemfree|kbmemused|^$' |awk '{printf " %.2f%\n",$6}'|sort -rn|head -n 1)
+
+echo "10.189.198.75"  "$J"
+
+
+echo -e "--------------------------------------"
+printf  "\n ====== Disk Utilization ======\n"
+
+#disk=$(df -h | awk '$NF=="/" {printf ("%s\n"),$5}')
+disk=$(df -h --total | grep -i total | awk '{print $5}')
+echo -e  "10.189.198.75 = $disk "
+echo -e "\n"
+
+
+for i in 75
+do
+echo -e "\033[1;36;40m\c"
+echo -e " -- MP Status of 10.189.198.$i -- "
+echo -e "\033[1;33;40m\c"
+df -h / /usr /home /tmp /var /Grid_19c /u01 /archive_logs | awk '{print $2"\t"$3"\t"$4"\t"$5"\t"$6 }'
+done
+
+echo -e "$NC"
+echo -e '\033[0m'
+
