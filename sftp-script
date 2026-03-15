@@ -1,0 +1,69 @@
+#!/bin/bash
+
+currDate=$(date "+%Y%m%d")
+
+# Configuration
+LOG_FILE="/Oracle_Client/sftp.log"
+# 1.7 GB in Kilobytes (1.7 * 1024 * 1024)
+MAX_SIZE=1782579
+
+
+if [ ! -f "$LOG_FILE" ]; then
+    echo "Error: $LOG_FILE not found."
+    exit 1
+fi
+
+CURRENT_SIZE=$(du -k "$LOG_FILE" | cut -f1)
+
+if [ "$CURRENT_SIZE" -gt "$MAX_SIZE" ]; then
+#    echo "Log file ($CURRENT_SIZE KB) exceeds 1.7 GB. Trimming..."
+    echo "$CURRENT_SIZE KB greater then $MAX_SIZE KB"
+        # Method 2: move the file fastest
+        mv "$LOG_FILE" "${LOG_FILE}_$currDate"
+
+        #create file new sftp file
+        touch "$LOG_FILE"
+
+        #set permission
+        chmod 0644 "$LOG_FILE"
+
+        #restart rsyslog
+        systemctl restart rsyslog.service
+        if [ $? -eq 0 ] ; then
+        echo "executing filepatter.sh script with vpsuser..."
+        echo "current filepattern process :- "
+        ps -ef | grep [f]ilepattern.pl
+        sleep 2
+        ps -ef | grep [f]ilepattern.pl| awk '{print $2}' | xargs kill -9
+                   if [ $? -ne 0 ]; then
+                        echo "Unable to killed filepattern.pl"
+                        else
+                        echo "filepattern.pl is killed"
+                   fi
+                 pgrep -u vpsuser -f "filepattern.pl" > /dev/null
+                if [ $? -eq 0 ] ; then
+                   echo "filepattern.pl is already running"
+                   else
+                sudo -u vpsuser bash -c "cd /vpsuser/vps_utility_code && nohup ./filepattern.pl > /vpsuser/vps_utility_code/nohup.out 2>&1 " &
+                        if [ $? -eq 0 ]; then
+                        echo "Filepattern started successfully."
+                        pgrep -u vpsuser -f "filepattern.pl"
+                        else
+                        echo "Error: Could not start filepattern."
+                        fi
+                fi
+
+        fi
+        echo "File pattern restarted & Trimming complete."
+        else
+        echo "Log size is safe ($CURRENT_SIZE KB)."
+fi
+
+
+
+
+The error /root/sftp.sh: line 32: : command not found confirms you still have invisible non-breaking spaces in your script. In your file, line 32 is likely a blank-looking line with a "bad" space character that Bash is trying to execute as a command.
+How to Fix Permanently
+Run this command on your server to strip out those hidden characters and fix the script:
+
+sed -i 's/\xc2\xa0/ /g' /root/sftp.sh
